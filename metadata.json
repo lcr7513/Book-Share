@@ -1,0 +1,6 @@
+{
+  "name": "Google Drive 파일 다운로드 카운터 & 추적 가이드",
+  "description": "구글 드라이브 파일 다운로드 횟수 기록 방법(Google Apps Script, 웹앱 중계 링크, 감사 로그) 안내 및 실시간 다운로드 트래커 포털 도구",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
