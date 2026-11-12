@@ -56,8 +56,9 @@ export const ShareLandingModal: React.FC<ShareLandingModalProps> = ({
     setAutoStarted(true);
     onRecordDownload(file.id);
 
-    // Open actual Google Drive direct download URL or simulate download
-    const targetUrl = file.customTargetUrl || getDirectDownloadUrl(file.driveFileId, file.driveUrl);
+    // Open server direct download with RFC 6266 UTF-8 headers to prevent broken Korean filename
+    const originUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    const targetUrl = `${originUrl}/api/download/${file.id}/direct`;
     
     // Create temporary anchor to initiate download without closing current window
     const a = document.createElement('a');

@@ -13,10 +13,24 @@ import { DeveloperApiGuide } from './components/DeveloperApiGuide';
 import { ComparisonMatrix } from './components/ComparisonMatrix';
 import { ShareLandingModal } from './components/ShareLandingModal';
 import { DiagnosticWizard } from './components/DiagnosticWizard';
+import { QrCodeModal } from './components/QrCodeModal';
+import { StudentDownloadView } from './components/StudentDownloadView';
 import { CheckCircle2, HeartHandshake } from 'lucide-react';
 
-// Initial Mock Files
+// Initial Files
 const INITIAL_FILES: TrackedFile[] = [
+  {
+    id: 'file-ai-inquiry',
+    name: 'AI를_활용한_사회문제탐구.pdf',
+    driveUrl: 'https://drive.google.com/file/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/view?usp=sharing',
+    driveFileId: '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms',
+    category: 'pdf',
+    size: '4.2 MB',
+    downloadCount: 15,
+    createdAt: '2026-11-11 10:00:00',
+    lastDownloadedAt: '2026-11-11 21:50:12',
+    description: '인공지능을 활용한 사회문제 해결 탐구 학습 자료 및 학생 과제 양식',
+  },
   {
     id: 'file-1',
     name: '2026학년도_학교_교육과정_운영계획_및_학사일정.pdf',
@@ -115,9 +129,34 @@ export default function App() {
   });
 
   const [previewFile, setPreviewFile] = useState<TrackedFile | null>(null);
+  const [qrModalFile, setQrModalFile] = useState<TrackedFile | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Sync to local storage
+  // Check if visitor is opening student-only single download URL (e.g. ?file=...)
+  const studentFileId = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('file') : null;
+
+  // 1. Initial fetch from backend persistent storage
+  useEffect(() => {
+    fetch('/api/files')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.success && Array.isArray(data.files) && data.files.length > 0) {
+          setFiles(data.files);
+        }
+      })
+      .catch((err) => console.log('Static or local mode:', err));
+
+    fetch('/api/logs')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.success && Array.isArray(data.logs)) {
+          setLogs(data.logs);
+        }
+      })
+      .catch((err) => console.log('Static or local mode:', err));
+  }, []);
+
+  // Sync to local storage for local cache
   useEffect(() => {
     localStorage.setItem('gdrive_tracked_files', JSON.stringify(files));
   }, [files]);
@@ -133,8 +172,25 @@ export default function App() {
     }, 3000);
   };
 
-  // Add a new file to tracking
-  const handleAddFile = (newFileData: Omit<TrackedFile, 'id' | 'downloadCount' | 'createdAt'>) => {
+  // Add a new file to tracking (saved permanently to server)
+  const handleAddFile = async (newFileData: Omit<TrackedFile, 'id' | 'downloadCount' | 'createdAt'>) => {
+    try {
+      const res = await fetch('/api/files', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newFileData),
+      });
+      const data = await res.json();
+      if (data && data.success && data.file) {
+        setFiles((prev) => [data.file, ...prev.filter((f) => f.id !== data.file.id)]);
+        showToast(`'${data.file.name}' 파일이 영구 저장되었습니다.`);
+        return;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
+    // Local fallback
     const nowStr = new Date().toLocaleString('ko-KR', { hour12: false });
     const newFile: TrackedFile = {
       ...newFileData,
@@ -143,20 +199,44 @@ export default function App() {
       createdAt: nowStr,
     };
     setFiles((prev) => [newFile, ...prev]);
-    showToast(`'${newFile.name}' 파일이 트래킹 목록에 추가되었습니다.`);
+    showToast(`'${newFile.name}' 파일이 저장되었습니다.`);
   };
 
-  // Delete a tracked file
-  const handleDeleteFile = (id: string) => {
-    setFiles((prev) => prev.filter((f) => f.id !== id));
-    showToast('파일이 트래커 목록에서 삭제되었습니다.');
+  // Delete a tracked file (permanently from server)
+  const handleDeleteFile = async (id: string) => {
+    try {
+      await fetch(`/api/files/${id}`, { method: 'DELETE' });
+    } catch (e) {
+      console.error(e);
+    }
+    setFiles((prev) => prev.filter((f) => f.id !== id && f.driveFileId !== id));
+    showToast('파일이 영구 삭제되었습니다.');
   };
 
-  // Record a download increment & append log
-  const handleRecordDownload = (fileId: string) => {
-    const targetFile = files.find((f) => f.id === fileId);
+  // Record a download increment & append log (saved permanently to server)
+  const handleRecordDownload = async (fileId: string) => {
+    const targetFile = files.find((f) => f.id === fileId || f.driveFileId === fileId);
     if (!targetFile) return;
 
+    try {
+      const res = await fetch(`/api/download/${targetFile.id}`, { method: 'POST' });
+      const data = await res.json();
+      if (data && data.success && data.file) {
+        setFiles((prev) => prev.map((f) => (f.id === targetFile.id ? data.file : f)));
+        // Refresh logs from server
+        fetch('/api/logs')
+          .then((r) => r.json())
+          .then((d) => {
+            if (d.logs) setLogs(d.logs);
+          });
+        showToast(`다운로드 카운트 +1 (${targetFile.name}) [영구 저장 완료]`);
+        return;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
+    // Fallback
     const now = new Date();
     const timestamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
       now.getDate()
@@ -164,10 +244,9 @@ export default function App() {
       now.getMinutes()
     ).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
 
-    // Update file count
     setFiles((prev) =>
       prev.map((f) => {
-        if (f.id === fileId) {
+        if (f.id === fileId || f.driveFileId === fileId) {
           return {
             ...f,
             downloadCount: f.downloadCount + 1,
@@ -178,7 +257,6 @@ export default function App() {
       })
     );
 
-    // Add log
     const userAgent = navigator.userAgent;
     const isMobile = /iPhone|iPad|iPod|Android/i.test(userAgent);
     const platform = isMobile ? 'Mobile' : 'Desktop';
@@ -199,12 +277,25 @@ export default function App() {
     showToast(`다운로드 카운트 +1 (${targetFile.name})`);
   };
 
-  const handleClearLogs = () => {
+  const handleClearLogs = async () => {
+    try {
+      await fetch('/api/logs', { method: 'DELETE' });
+    } catch (e) {
+      console.error(e);
+    }
     setLogs([]);
     showToast('다운로드 로그 기록이 초기화되었습니다.');
   };
 
   const totalDownloads = files.reduce((acc, f) => acc + f.downloadCount, 0);
+
+  // If student accesses isolated download page via ?file=...
+  if (studentFileId) {
+    const studentTarget = files.find((f) => f.id === studentFileId || f.driveFileId === studentFileId);
+    if (studentTarget) {
+      return <StudentDownloadView file={studentTarget} onRecordDownload={handleRecordDownload} />;
+    }
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
@@ -236,6 +327,7 @@ export default function App() {
             onRecordDownload={handleRecordDownload}
             onClearLogs={handleClearLogs}
             onPreviewLanding={(file) => setPreviewFile(file)}
+            onOpenQrModal={(file) => setQrModalFile(file)}
           />
         )}
 
@@ -256,6 +348,14 @@ export default function App() {
           file={previewFile}
           onClose={() => setPreviewFile(null)}
           onRecordDownload={handleRecordDownload}
+        />
+      )}
+
+      {/* Modal for QR Code & Student Share */}
+      {qrModalFile && (
+        <QrCodeModal
+          file={qrModalFile}
+          onClose={() => setQrModalFile(null)}
         />
       )}
 

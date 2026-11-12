@@ -22,7 +22,8 @@ import {
   Sparkles,
   Link2,
   HardDrive,
-  Share2
+  Share2,
+  QrCode
 } from 'lucide-react';
 
 interface TrackerSimulatorProps {
@@ -33,6 +34,7 @@ interface TrackerSimulatorProps {
   onRecordDownload: (fileId: string) => void;
   onClearLogs: () => void;
   onPreviewLanding: (file: TrackedFile) => void;
+  onOpenQrModal: (file: TrackedFile) => void;
 }
 
 export const TrackerSimulator: React.FC<TrackerSimulatorProps> = ({
@@ -43,6 +45,7 @@ export const TrackerSimulator: React.FC<TrackerSimulatorProps> = ({
   onRecordDownload,
   onClearLogs,
   onPreviewLanding,
+  onOpenQrModal,
 }) => {
   const [inputUrl, setInputUrl] = useState('');
   const [customName, setCustomName] = useState('');
@@ -63,7 +66,12 @@ export const TrackerSimulator: React.FC<TrackerSimulatorProps> = ({
     e.preventDefault();
     if (!extractedId) return;
 
-    const name = customName.trim() || `드라이브_자료_${extractedId.slice(0, 6)}.${guessFileCategory(customName) === 'image' ? 'png' : 'pdf'}`;
+    let name = customName.trim();
+    if (!name) {
+      name = `드라이브_자료_${extractedId.slice(0, 6)}.pdf`;
+    } else if (!name.includes('.')) {
+      name = `${name}.pdf`;
+    }
     const category = guessFileCategory(name);
 
     onAddFile({
@@ -71,7 +79,7 @@ export const TrackerSimulator: React.FC<TrackerSimulatorProps> = ({
       driveUrl: inputUrl.trim(),
       driveFileId: extractedId,
       category,
-      size: customSize.trim() || '1.8 MB',
+      size: customSize.trim() || '2.4 MB',
       description: '추적 링크를 통해 다운로드 집계 중인 파일',
     });
 
@@ -375,6 +383,15 @@ export const TrackerSimulator: React.FC<TrackerSimulatorProps> = ({
 
                 {/* Card Actions */}
                 <div className="pt-3 border-t border-slate-100 space-y-2">
+                  {/* QR & Student Share Dedicated Button */}
+                  <button
+                    onClick={() => onOpenQrModal(file)}
+                    className="w-full py-2 px-3 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-indigo-200/80 shadow-xs"
+                  >
+                    <QrCode className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>📱 큐알(QR)코드 &amp; 학생 링크</span>
+                  </button>
+
                   {/* Download Button */}
                   <button
                     onClick={() => handleTriggerDownload(file)}
@@ -396,8 +413,12 @@ export const TrackerSimulator: React.FC<TrackerSimulatorProps> = ({
                     </button>
 
                     <button
-                      onClick={() => handleCopy(directUrl, `direct-${file.id}`)}
-                      title="학생에게 공유할 다운로드 링크 복사"
+                      onClick={() => {
+                        const originUrl = typeof window !== 'undefined' ? window.location.origin : 'https://ais-dev-dfycvqsuilwbhjt6s4xsrc-657342148388.asia-northeast1.run.app';
+                        const shareUrl = `${originUrl}/api/download/${file.id}/direct`;
+                        handleCopy(shareUrl, `direct-${file.id}`);
+                      }}
+                      title="한글 파일명 깨짐 없이 다운로드되는 학생 공유 링크 복사"
                       className="py-1.5 px-2 rounded-lg border border-slate-200 hover:bg-blue-50 hover:text-blue-600 text-slate-700 flex items-center justify-center gap-1 text-[11px] cursor-pointer"
                     >
                       {copiedId === `direct-${file.id}` ? (

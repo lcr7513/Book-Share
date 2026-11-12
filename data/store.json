@@ -1,0 +1,60 @@
+{
+  "files": [
+    {
+      "id": "file-1794465395226",
+      "name": "청소년이 설계한 12가지 전공·시사 탐구 최종본.pdf",
+      "driveUrl": "https://drive.google.com/file/d/1LT4gTmNPPQ5ICpKapK1is84nq35Zv1c3/view?usp=sharing",
+      "driveFileId": "1LT4gTmNPPQ5ICpKapK1is84nq35Zv1c3",
+      "category": "pdf",
+      "size": "57.3 MB",
+      "downloadCount": 2,
+      "createdAt": "2026. 11. 12. 6시 36분 35초",
+      "description": "청소년 맞춤형 12가지 전공 및 시사 이슈 심층 탐구 보고서 최종본",
+      "lastDownloadedAt": "2026-11-12 06:50:35"
+    },
+    {
+      "id": "file-1794465447487",
+      "name": "AI 를 활용한 사회문제탐구 최최종.pdf",
+      "driveUrl": "https://drive.google.com/file/d/1NxlbZH81rlY4eCH3pYWS86Aq2Mg7qIhA/view?usp=sharing",
+      "driveFileId": "1NxlbZH81rlY4eCH3pYWS86Aq2Mg7qIhA",
+      "category": "pdf",
+      "size": "4.2 MB",
+      "downloadCount": 1,
+      "createdAt": "2026. 11. 12. 6시 37분 27초",
+      "description": "인공지능(AI)을 활용한 사회문제 해결 학생 탐구 활동지 및 서식",
+      "lastDownloadedAt": "2026-11-12 06:37:36"
+    }
+  ],
+  "logs": [
+    {
+      "id": "log-1794466235016",
+      "fileId": "1LT4gTmNPPQ5ICpKapK1is84nq35Zv1c3",
+      "fileName": "청소년이 설계한 12가지 전공·시사 탐구 최종본.pdf",
+      "timestamp": "2026-11-12 06:50:35",
+      "referrer": "학생 직접 다운로드 링크",
+      "device": "Direct Stream Click",
+      "ip": "203.241.***.***",
+      "status": "success"
+    },
+    {
+      "id": "log-1794465403727",
+      "fileId": "1LT4gTmNPPQ5ICpKapK1is84nq35Zv1c3",
+      "fileName": "청소년이 설계한 12가지 전공·시사 탐구 최종본.pdf",
+      "timestamp": "2026-11-12 06:36:43",
+      "referrer": "https://ais-dev-dfycvqsuilwbhjt6s4xsrc-657342148388.asia-northeast1.run.app/",
+      "device": "Desktop (Chrome)",
+      "ip": "211.46.131.47, 169.254.169.126",
+      "status": "success"
+    },
+    {
+      "id": "log-1794465456154",
+      "fileId": "1NxlbZH81rlY4eCH3pYWS86Aq2Mg7qIhA",
+      "fileName": "AI 를 활용한 사회문제탐구 최최종.pdf",
+      "timestamp": "2026-11-12 06:37:36",
+      "referrer": "https://ais-dev-dfycvqsuilwbhjt6s4xsrc-657342148388.asia-northeast1.run.app/",
+      "device": "Desktop (Chrome)",
+      "ip": "211.46.131.47, 169.254.169.126",
+      "status": "success"
+    }
+  ]
+}
